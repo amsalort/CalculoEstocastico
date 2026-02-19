@@ -110,6 +110,24 @@
             opacity: 0.9;
         }
 
+        .header .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            padding: 7px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 0.82em;
+            color: white;
+            transition: all 0.2s;
+        }        
+
         .content {
             display: grid;
             grid-template-columns: 420px 1fr;
@@ -396,9 +414,9 @@
             <h1>📊 Simulador de Ley de los Grandes Números</h1>
             <p>Cálculo Estocástico 2026 - Prof. Ariel Salort</p>
                                 <div class="header-theme-toggle">
-                <button onclick="setTheme('light')" id="theme-light">☀️ Claro</button>
-                <button onclick="setTheme('normal')" id="theme-normal" class="active">🌗 Normal</button>
-                <button onclick="setTheme('dark')" id="theme-dark">🌙 Oscuro</button>
+       <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+                <span class="icon">🌙</span><span id="theme-label">Modo Claro</span>
+            </button>
             </div>
         </div>
 
