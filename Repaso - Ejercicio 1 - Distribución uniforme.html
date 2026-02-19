@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Ley de los Grandes Números - Cálculo Estocástico</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            transition: background 0.5s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .container {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .controls {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .control-group label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .value-display span {
+            color: #c4a7ff;
+        }
+
+        body.dark-mode .info-box {
+            background: linear-gradient(135deg, #2a2a4e 0%, #3a3a5e 100%);
+            border-left-color: #9f9fff;
+        }
+
+        body.dark-mode .info-box h3 {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .info-box p {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .formula {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .chart-container {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .results-table {
+            background: #1f1f2e;
+            border-color: #3a3a4e;
+        }
+
+        body.dark-mode .results-table th {
+            background: #2a2a4e;
+            color: #9f9fff;
+        }
+
+        body.dark-mode .results-table td {
+            border-color: #3a3a4e;
+            color: #c0c0c0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .value-display span {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]:hover {
+            background: #b8b8b8;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simulate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #e9d5ff 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .formula {
+            background: white;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            font-size: 1.0em;
+            text-align: center;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+        }
+
+        .results-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .results-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        body.dark-mode .results-table tr:hover {
+            background: #2a2a4e;
+        }
+
+        .good-convergence {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        .medium-convergence {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .poor-convergence {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .divider {
+            margin: 20px 0;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        body.dark-mode .divider {
+            border-top-color: #3a3a4e;
+        }
+
+        body.light-mode .divider {
+            border-top-color: #d0d0d0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode
+
+        body.light-mode
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .btn-home:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        .header-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-theme-toggle button {
+            padding: 7px 13px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .header-theme-toggle button:hover,
+        .header-theme-toggle button.active {
+            background: rgba(255,255,255,0.35);
+            border-color: rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="btn-home">🏠 Inicio</a>
+            <h1>📊 Simulador de Ley de los Grandes Números</h1>
+            <p>Cálculo Estocástico 2026 - Prof. Ariel Salort</p>
+                                <div class="header-theme-toggle">
+                <button onclick="setTheme('light')" id="theme-light">☀️ Claro</button>
+                <button onclick="setTheme('normal')" id="theme-normal" class="active">🌗 Normal</button>
+                <button onclick="setTheme('dark')" id="theme-dark">🌙 Oscuro</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <h2 style="margin-bottom: 20px; color: #667eea;">⚙️ Parámetros</h2>
+                
+                <div class="info-box">
+                    <h3>📊 Distribución de Bernoulli</h3>
+                    <p>Variable aleatoria X ~ Bernoulli(α):</p>
+                    <div class="formula">
+                        P(X=1) = α<br>
+                        P(X=0) = 1-α<br>
+                        E[X] = α
+                    </div>
+                    <p style="margin-top: 10px;"><strong>Ley de los Grandes Números:</strong><br>
+                    Cuando n → ∞, la media muestral converge a E[X] = α</p>
+                </div>
+
+                <table class="results-table" id="results-table">
+                    <thead>
+                        <tr>
+                            <th>n</th>
+                            <th>Media Muestral</th>
+                            <th>|Diferencia|</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                        <tr>
+                            <td colspan="3">Ejecuta la simulación...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="loading" id="loading">⏳ Simulando...</div>
+                <button class="btn-simulate" onclick="simulate()">🚀 Simular</button>
+
+                <div class="divider"></div>
+
+                <div class="control-group">
+                    <label>Parámetro α (Bernoulli)</label>
+                    <div class="value-display">
+                        <span id="alpha-value">0.40</span>
+                        <span style="font-size: 0.9em; color: #888;">P(X=1)</span>
+                    </div>
+                    <input type="range" id="alpha-slider" min="0" max="1" value="0.4" step="0.01">
+                </div>
+
+                <div class="control-group">
+                    <label>Tamaños de Muestra (n)</label>
+                    <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                        Simula para n = 10, 100, 1,000, 10,000, 100,000
+                    </p>
+                </div>
+
+                <div class="divider"></div>
+
+            </div>
+
+            <div class="chart-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setTheme(theme) {
+        // Update header buttons
+        ['light','normal','dark'].forEach(t => {
+            const b = document.getElementById('theme-' + t);
+            if (b) b.classList.toggle('active', t === theme);
+        });
+            const body = document.body;
+            
+            body.classList.remove('light-mode', 'dark-mode');
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                document.getElementById('theme-light').classList.add('active');
+            } else if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                document.getElementById('theme-dark').classList.add('active');
+            } else {
+                document.getElementById('theme-normal').classList.add('active');
+            }
+            
+            localStorage.setItem('theme', theme);
+            simulate();
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'normal';
+            setTheme(savedTheme);
+        }
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            
+            slider.addEventListener('input', function() {
+                let value = parseFloat(this.value);
+                valueDisplay.textContent = value.toFixed(2);
+            });
+        }
+
+        updateSliderValue('alpha-slider', 'alpha-value');
+
+        function simulate() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            setTimeout(() => {
+                const alpha = parseFloat(document.getElementById('alpha-slider').value);
+                const ensayos = [10, 100, 1000, 10000, 100000];
+                
+                const results = [];
+                const convergenceData = [];
+
+                // Para cada tamaño de muestra
+                for (let n of ensayos) {
+                    // Generar n valores de Bernoulli(alpha)
+                    let sum = 0;
+                    for (let i = 0; i < n; i++) {
+                        sum += Math.random() < alpha ? 1 : 0;
+                    }
+                    
+                    const mediaMuestral = sum / n;
+                    const diferencia = Math.abs(mediaMuestral - alpha);
+                    
+                    results.push({
+                        n: n,
+                        media: mediaMuestral,
+                        diferencia: diferencia
+                    });
+
+                    convergenceData.push({
+                        n: n,
+                        media: mediaMuestral
+                    });
+                }
+
+                // Actualizar tabla de resultados
+                updateResultsTable(results, alpha);
+
+                // Graficar convergencia
+                plotConvergence(convergenceData, alpha);
+
+                loading.classList.remove('active');
+            }, 100);
+        }
+
+        function updateResultsTable(results, alpha) {
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = '';
+
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                
+                // Clasificar la convergencia
+                let diffClass = 'good-convergence';
+                if (result.diferencia > 0.05) {
+                    diffClass = 'poor-convergence';
+                } else if (result.diferencia > 0.02) {
+                    diffClass = 'medium-convergence';
+                }
+
+                row.innerHTML = `
+                    <td>${result.n.toLocaleString()}</td>
+                    <td>${result.media.toFixed(4)}</td>
+                    <td class="${diffClass}">${result.diferencia.toFixed(4)}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function plotConvergence(data, alpha) {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const isLightMode = document.body.classList.contains('light-mode');
+
+            // Traza de las medias muestrales
+            const trace1 = {
+                x: data.map(d => d.n),
+                y: data.map(d => d.media),
+                mode: 'lines+markers',
+                name: 'Media Muestral',
+                line: {
+                    color: '#667eea',
+                    width: 3
+                },
+                marker: {
+                    size: 10,
+                    color: '#764ba2'
+                }
+            };
+
+            // Línea del valor teórico E[X] = α
+            const trace2 = {
+                x: data.map(d => d.n),
+                y: data.map(() => alpha),
+                mode: 'lines',
+                name: `E[X] = ${alpha.toFixed(2)} (Teórico)`,
+                line: {
+                    color: 'red',
+                    width: 3,
+                    dash: 'dash'
+                }
+            };
+
+            const layout = {
+                title: {
+                    text: 'Convergencia de la Media Muestral hacia E[X]',
+                    font: {
+                        size: 22,
+                        color: isDarkMode ? '#e0e0e0' : '#333',
+                        family: 'Segoe UI'
+                    }
+                },
+                xaxis: {
+                    title: {
+                        text: 'Tamaño de Muestra (n)',
+                        font: {
+                            size: 16,
+                            color: isDarkMode ? '#9f9fff' : '#667eea'
+                        }
+                    },
+                    type: 'log',
+                    gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                    showgrid: true,
+                    color: isDarkMode ? '#c0c0c0' : '#333'
+                },
+                yaxis: {
+                    title: {
+                        text: 'Media Muestral',
+                        font: {
+                            size: 16,
+                            color: isDarkMode ? '#9f9fff' : '#667eea'
+                        }
+                    },
+                    gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                    showgrid: true,
+                    color: isDarkMode ? '#c0c0c0' : '#333',
+                    range: [Math.max(0, alpha - 0.2), Math.min(1, alpha + 0.2)]
+                },
+                plot_bgcolor: isDarkMode ? '#1a1a2e' : (isLightMode ? '#fefefe' : '#fafafa'),
+                paper_bgcolor: isDarkMode ? '#1f1f2e' : 'white',
+                hovermode: 'closest',
+                legend: {
+                    x: 1,
+                    y: 0,
+                    xanchor: 'right',
+                    yanchor: 'bottom',
+                    bgcolor: isDarkMode ? 'rgba(42, 42, 62, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: isDarkMode ? '#9f9fff' : '#667eea',
+                    borderwidth: 2,
+                    font: {
+                        color: isDarkMode ? '#e0e0e0' : '#333',
+                        size: 12
+                    }
+                },
+                margin: {
+                    l: 70,
+                    r: 40,
+                    t: 80,
+                    b: 60
+                }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d']
+            };
+
+            Plotly.newPlot('plot', [trace1, trace2], layout, config);
+        }
+
+        window.addEventListener('load', () => {
+            loadSavedTheme();
+        });
+
+        document.getElementById('alpha-slider').addEventListener('change', simulate);
+    </script>
+</body>
+</html>
