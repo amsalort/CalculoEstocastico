@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Juegos de Azar - Ecuaciones Estocásticas</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            transition: background 0.5s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .container {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .controls {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .control-group label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .value-display span {
+            color: #c4a7ff;
+        }
+
+        body.dark-mode .info-box {
+            background: linear-gradient(135deg, #2a2a4e 0%, #3a3a5e 100%);
+            border-left-color: #9f9fff;
+        }
+
+        body.dark-mode .info-box h3 {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .info-box p {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .formula {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .chart-container {
+            background: #1f1f2e;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .value-display span {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]:hover {
+            background: #b8b8b8;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simulate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        .game-type-selector {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .game-btn {
+            padding: 12px;
+            border: 2px solid #d0d0d0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .game-btn.roulette.active {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            border-color: #e74c3c;
+        }
+
+        .game-btn.coin.active {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            border-color: #f39c12;
+        }
+
+        body.dark-mode .game-btn {
+            background: #3a3a4e;
+            color: #c0c0c0;
+            border-color: #555;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #e9d5ff 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .formula {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.95em;
+        }
+
+        .divider {
+            margin: 20px 0;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        body.dark-mode .divider {
+            border-top-color: #3a3a4e;
+        }
+
+        body.light-mode .divider {
+            border-top-color: #d0d0d0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode
+
+        body.light-mode
+
+        .stats-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        body.dark-mode .stat-label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .stat-value {
+            color: #c4a7ff;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .btn-home:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        .header-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-theme-toggle button {
+            padding: 7px 13px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .header-theme-toggle button:hover,
+        .header-theme-toggle button.active {
+            background: rgba(255,255,255,0.35);
+            border-color: rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="btn-home">🏠 Inicio</a>
+            <h1>🎰 Simulador de Juegos de Azar</h1>
+            <p>Ecuaciones Estocásticas 2026 - Prof. Ariel Salort</p>
+                                <div class="header-theme-toggle">
+                <button onclick="setTheme('light')" id="theme-light">☀️ Claro</button>
+                <button onclick="setTheme('dark')" id="theme-dark">🌙 Oscuro</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <h2 style="margin-bottom: 20px; color: #667eea;">⚙️ Parámetros</h2>
+                
+                <div class="info-box">
+                    <h3>🎲 Tipo de Juego</h3>
+                    <div class="game-type-selector">
+                        <button class="game-btn roulette active" onclick="setGameType('roulette')" id="game-roulette">
+                            🎡 Ruleta
+                        </button>
+                        <button class="game-btn coin" onclick="setGameType('coin')" id="game-coin">
+                            🪙 Moneda
+                        </button>
+                    </div>
+                    <div id="game-description" class="formula">
+                        X<sub>n</sub> = X<sub>n-1</sub> + Y<sub>n</sub><br>
+                        <small>Y<sub>n</sub> ∈ {+1, -1}</small>
+                    </div>
+                    <div class="stats-box" id="prob-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">P(ganar):</span>
+                            <span class="stat-value" id="prob-win">0.4864</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">P(perder):</span>
+                            <span class="stat-value" id="prob-lose">0.5136</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Ventaja casa:</span>
+                            <span class="stat-value" id="house-edge">-2.72%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">⏳ Simulando...</div>
+                <button class="btn-simulate" onclick="simulate()">🚀 Simular</button>
+
+                <div class="divider"></div>
+
+                <div class="control-group">
+                    <label>Capital Inicial (X₀)</label>
+                    <div class="value-display">
+                        <span id="X0-value">10000</span>
+                        <span style="font-size: 0.9em; color: #888;">unidades</span>
+                    </div>
+                    <input type="range" id="X0-slider" min="100" max="50000" value="10000" step="100">
+                </div>
+
+                <div class="control-group">
+                    <label>Número de Rondas</label>
+                    <div class="value-display">
+                        <span id="N-value">10000</span>
+                        <span style="font-size: 0.9em; color: #888;">rondas</span>
+                    </div>
+                    <input type="range" id="N-slider" min="100" max="50000" value="10000" step="100">
+                </div>
+
+                <div class="control-group">
+                    <label>Número de Simulaciones</label>
+                    <div class="value-display">
+                        <span id="S-value">10</span>
+                        <span style="font-size: 0.9em; color: #888;">trayectorias</span>
+                    </div>
+                    <input type="range" id="S-slider" min="1" max="100" value="10" step="1">
+                </div>
+
+                <div class="control-group">
+                    <label>Probabilidad de Ganar (p)</label>
+                    <div class="value-display">
+                        <span id="p-value">0.4864</span>
+                        <span style="font-size: 0.9em; color: #888;">0.00 - 1.00</span>
+                    </div>
+                    <input type="range" id="p-slider" min="0" max="1" value="0.4864" step="0.0001">
+                </div>
+
+                <div class="control-group">
+                    <label>Probabilidad de Perder (q)</label>
+                    <div class="value-display">
+                        <span id="q-value">0.5136</span>
+                        <span style="font-size: 0.9em; color: #888;">calculado: q = 1 - p</span>
+                    </div>
+                    <input type="range" id="q-slider" min="0" max="1" value="0.5136" step="0.0001" disabled style="opacity: 0.5;">
+                </div>
+
+                <div class="divider"></div>
+
+            </div>
+
+            <div class="chart-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGameType = 'roulette';
+        let currentP = 0.4864;
+
+        // Función para cambiar el tipo de juego
+        function setGameType(type) {
+            currentGameType = type;
+            
+            // Actualizar botones
+            document.querySelectorAll('.game-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`game-${type}`).classList.add('active');
+            
+            // Actualizar probabilidades predeterminadas
+            if (type === 'roulette') {
+                currentP = 0.4864; // 18/37 (ruleta europea)
+                document.getElementById('p-slider').value = 0.4864;
+                document.getElementById('p-value').textContent = '0.4864';
+            } else if (type === 'coin') {
+                currentP = 0.5;
+                document.getElementById('p-slider').value = 0.5;
+                document.getElementById('p-value').textContent = '0.5000';
+            }
+            
+            updateProbStats();
+            simulate();
+        }
+
+        function updateProbStats() {
+            const q = 1 - currentP;
+            const expectedValue = currentP * 1 + q * (-1);
+            const houseEdge = -expectedValue * 100;
+            
+            document.getElementById('prob-win').textContent = currentP.toFixed(4);
+            document.getElementById('prob-lose').textContent = q.toFixed(4);
+            document.getElementById('house-edge').textContent = houseEdge.toFixed(2) + '%';
+        }
+
+        // Función para cambiar el tema
+        function setTheme(theme) {
+        // Update header buttons
+        ['light','normal','dark'].forEach(t => {
+            const b = document.getElementById('theme-' + t);
+            if (b) b.classList.toggle('active', t === theme);
+        });
+            const body = document.body;
+            
+            body.classList.remove('light-mode', 'dark-mode');
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                document.getElementById('theme-light').classList.add('active');
+            } else if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                document.getElementById('theme-dark').classList.add('active');
+            } else {
+                document.getElementById('theme-normal').classList.add('active');
+            }
+            
+            localStorage.setItem('theme', theme);
+            simulate();
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+        }
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            
+            slider.addEventListener('input', function() {
+                let value = parseFloat(this.value);
+                if (sliderId === 'p-slider') {
+                    valueDisplay.textContent = value.toFixed(4);
+                    currentP = value;
+                    
+                    // Actualizar q automáticamente
+                    const q = 1 - value;
+                    document.getElementById('q-value').textContent = q.toFixed(4);
+                    document.getElementById('q-slider').value = q;
+                    
+                    updateProbStats();
+                } else {
+                    valueDisplay.textContent = value;
+                }
+            });
+        }
+
+        updateSliderValue('X0-slider', 'X0-value');
+        updateSliderValue('N-slider', 'N-value');
+        updateSliderValue('S-slider', 'S-value');
+        updateSliderValue('p-slider', 'p-value');
+        updateSliderValue('q-slider', 'q-value');
+
+        // Función principal de simulación
+        function simulate() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            setTimeout(() => {
+                const x0 = parseInt(document.getElementById('X0-slider').value);
+                const n_rondas = parseInt(document.getElementById('N-slider').value);
+                const n_simulaciones = parseInt(document.getElementById('S-slider').value);
+                
+                const p = currentP;
+                const q = 1 - p;
+
+                const traces = [];
+                const colors = [
+                    '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                    '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+                    '#a8edea', '#fed6e3', '#ff6b6b', '#4ecdc4',
+                    '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe',
+                    '#fd79a8', '#fdcb6e', '#e17055', '#00b894'
+                ];
+
+                // Color adaptativo para muchas simulaciones
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const manySimsColor = isDarkMode ? 'rgba(200, 200, 200, 0.4)' : 'rgba(0, 0, 0, 0.4)';
+
+                for (let sim = 0; sim < n_simulaciones; sim++) {
+                    // Generar secuencia de ganancias/pérdidas
+                    const Y = new Array(n_rondas + 1);
+                    for (let i = 0; i <= n_rondas; i++) {
+                        Y[i] = Math.random() < p ? 1 : -1;
+                    }
+
+                    // Calcular capital acumulado
+                    const X = new Array(n_rondas + 1);
+                    X[0] = x0;
+                    
+                    for (let i = 1; i <= n_rondas; i++) {
+                        X[i] = X[i - 1] + Y[i];
+                    }
+
+                    const rondas = Array.from({length: n_rondas + 1}, (_, i) => i);
+
+                    const useDistinctColors = n_simulaciones <= 20;
+
+                    traces.push({
+                        x: rondas,
+                        y: X,
+                        mode: 'lines',
+                        name: useDistinctColors ? `Simulación ${sim + 1}` : '',
+                        line: {
+                            color: useDistinctColors ? colors[sim % colors.length] : manySimsColor,
+                            width: useDistinctColors ? 2 : 0.5
+                        },
+                        showlegend: useDistinctColors
+                    });
+                }
+
+                // Línea de referencia en el capital inicial
+                traces.push({
+                    x: [0, n_rondas],
+                    y: [x0, x0],
+                    mode: 'lines',
+                    name: 'Capital Inicial',
+                    line: {
+                        color: 'red',
+                        width: 2,
+                        dash: 'dash'
+                    },
+                    showlegend: true
+                });
+
+                const isLightMode = document.body.classList.contains('light-mode');
+                
+                const gameNames = {
+                    roulette: 'Ruleta',
+                    coin: 'Moneda Justa'
+                };
+
+                const layout = {
+                    title: {
+                        text: `Simulaciones de ${gameNames[currentGameType]} - p=${p.toFixed(4)}, q=${q.toFixed(4)} (Capital inicial: ${x0})`,
+                        font: {
+                            size: 19,
+                            color: isDarkMode ? '#e0e0e0' : '#333',
+                            family: 'Segoe UI'
+                        }
+                    },
+                    xaxis: {
+                        title: {
+                            text: 'Rondas',
+                            font: {
+                                size: 16,
+                                color: isDarkMode ? '#9f9fff' : '#667eea'
+                            }
+                        },
+                        gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                        showgrid: true,
+                        color: isDarkMode ? '#c0c0c0' : '#333'
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Capital',
+                            font: {
+                                size: 16,
+                                color: isDarkMode ? '#9f9fff' : '#667eea'
+                            }
+                        },
+                        gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                        showgrid: true,
+                        color: isDarkMode ? '#c0c0c0' : '#333'
+                    },
+                    plot_bgcolor: isDarkMode ? '#1a1a2e' : (isLightMode ? '#fefefe' : '#fafafa'),
+                    paper_bgcolor: isDarkMode ? '#1f1f2e' : 'white',
+                    hovermode: 'closest',
+                    legend: {
+                        x: 1,
+                        y: 1,
+                        xanchor: 'right',
+                        bgcolor: isDarkMode ? 'rgba(42, 42, 62, 0.9)' : 'rgba(255, 255, 255, 0.8)',
+                        bordercolor: isDarkMode ? '#9f9fff' : '#667eea',
+                        borderwidth: 1,
+                        font: {
+                            color: isDarkMode ? '#e0e0e0' : '#333'
+                        }
+                    },
+                    margin: {
+                        l: 70,
+                        r: 40,
+                        t: 80,
+                        b: 60
+                    }
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                };
+
+                Plotly.newPlot('plot', traces, layout, config);
+
+                loading.classList.remove('active');
+            }, 100);
+        }
+
+        window.addEventListener('load', () => {
+            loadSavedTheme();
+            updateProbStats();
+            simulate();
+        });
+
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('change', simulate);
+        });
+    </script>
+</body>
+</html>
