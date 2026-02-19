@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Estimación de Parámetros - Cálculo Estocástico</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            transition: background 0.5s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .container {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .controls {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .control-group label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .value-display span {
+            color: #c4a7ff;
+        }
+
+        body.dark-mode .info-box {
+            background: linear-gradient(135deg, #2a2a4e 0%, #3a3a5e 100%);
+            border-left-color: #9f9fff;
+        }
+
+        body.dark-mode .info-box h3 {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .info-box p {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .formula {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .chart-container {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .comparison-box {
+            background: #1f1f2e;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .value-display span {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]:hover {
+            background: #b8b8b8;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simulate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #e9d5ff 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .formula {
+            background: white;
+            padding: 12px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.95em;
+        }
+
+        .comparison-box {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-item:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .comparison-value {
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .theoretical {
+            color: #e74c3c;
+        }
+
+        .error {
+            color: #f39c12;
+            font-size: 0.9em;
+        }
+
+        body.dark-mode .comparison-label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .comparison-item {
+            border-bottom-color: #3a3a4e;
+        }
+
+        .divider {
+            margin: 20px 0;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        body.dark-mode .divider {
+            border-top-color: #3a3a4e;
+        }
+
+        body.light-mode .divider {
+            border-top-color: #d0d0d0;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode
+
+        body.light-mode
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .btn-home {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .btn-home:hover {
+            background: rgba(255,255,255,0.35);
+        }
+
+        .header-theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-theme-toggle button {
+            padding: 7px 13px;
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .header-theme-toggle button:hover,
+        .header-theme-toggle button.active {
+            background: rgba(255,255,255,0.35);
+            border-color: rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="btn-home">🏠 Inicio</a>
+            <h1>📈 Simulador de Estimación de Parámetros</h1>
+            <p>Cálculo Estocástico 2026 - Prof. Ariel Salort</p>
+                                <div class="header-theme-toggle">
+                <button onclick="setTheme('light')" id="theme-light">☀️ Claro</button>
+                <button onclick="setTheme('normal')" id="theme-normal" class="active">🌗 Normal</button>
+                <button onclick="setTheme('dark')" id="theme-dark">🌙 Oscuro</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <h2 style="margin-bottom: 20px; color: #667eea;">⚙️ Parámetros</h2>
+                
+                <div class="info-box">
+                    <h3>📊 Distribución Normal</h3>
+                    <p>Variable aleatoria X ~ N(μ, σ²):</p>
+                    <div class="formula">
+                        Media: X̄ = (1/n)Σ Xᵢ<br>
+                        Varianza: S² = (1/(n-1))Σ(Xᵢ-X̄)²
+                    </div>
+                    <p style="margin-top: 10px;">
+                        Estimadores insesgados:<br>
+                        E[X̄] = μ,  E[S²] = σ²
+                    </p>
+                </div>
+
+                <div class="comparison-box">
+                    <h3 style="color: #667eea; margin-bottom: 15px; text-align: center;">📊 Comparación</h3>
+                    
+                    <div class="comparison-item">
+                        <span class="comparison-label">Media Muestral:</span>
+                        <span class="comparison-value" id="media-muestral">-</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Media Teórica (μ):</span>
+                        <span class="theoretical" id="media-teorica">-</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Error Absoluto:</span>
+                        <span class="error" id="error-media">-</span>
+                    </div>
+
+                <div class="divider"></div>
+
+                    <div class="comparison-item">
+                        <span class="comparison-label">Varianza Muestral:</span>
+                        <span class="comparison-value" id="var-muestral">-</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Varianza Teórica (σ²):</span>
+                        <span class="theoretical" id="var-teorica">-</span>
+                    </div>
+                    <div class="comparison-item">
+                        <span class="comparison-label">Error Absoluto:</span>
+                        <span class="error" id="error-var">-</span>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">⏳ Simulando...</div>
+                <button class="btn-simulate" onclick="simulate()">🚀 Simular</button>
+
+                <div class="divider"></div>
+
+                <div class="control-group">
+                    <label>Media Teórica (μ)</label>
+                    <div class="value-display">
+                        <span id="mu-value">2.0</span>
+                        <span style="font-size: 0.9em; color: #888;">μ</span>
+                    </div>
+                    <input type="range" id="mu-slider" min="-5" max="5" value="2" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Varianza Teórica (σ²)</label>
+                    <div class="value-display">
+                        <span id="sigma2-value">9.0</span>
+                        <span style="font-size: 0.9em; color: #888;">σ² (σ = <span id="sigma-display">3.0</span>)</span>
+                    </div>
+                    <input type="range" id="sigma2-slider" min="0.1" max="25" value="9" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Tamaño de Muestra (n)</label>
+                    <div class="value-display">
+                        <span id="n-value">1000</span>
+                        <span style="font-size: 0.9em; color: #888;">observaciones</span>
+                    </div>
+                    <input type="range" id="n-slider" min="10" max="10000" value="1000" step="10">
+                </div>
+
+                <div class="divider"></div>
+
+            </div>
+
+            <div class="chart-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setTheme(theme) {
+        // Update header buttons
+        ['light','normal','dark'].forEach(t => {
+            const b = document.getElementById('theme-' + t);
+            if (b) b.classList.toggle('active', t === theme);
+        });
+            const body = document.body;
+            
+            body.classList.remove('light-mode', 'dark-mode');
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                document.getElementById('theme-light').classList.add('active');
+            } else if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                document.getElementById('theme-dark').classList.add('active');
+            } else {
+                document.getElementById('theme-normal').classList.add('active');
+            }
+            
+            localStorage.setItem('theme', theme);
+            simulate();
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'normal';
+            setTheme(savedTheme);
+        }
+
+        function randomNormal(mean = 0, std = 1) {
+            let u1 = Math.random();
+            let u2 = Math.random();
+            let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            return z0 * std + mean;
+        }
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            
+            slider.addEventListener('input', function() {
+                let value = parseFloat(this.value);
+                if (sliderId === 'sigma2-slider') {
+                    valueDisplay.textContent = value.toFixed(1);
+                    document.getElementById('sigma-display').textContent = Math.sqrt(value).toFixed(2);
+                } else if (sliderId === 'mu-slider') {
+                    valueDisplay.textContent = value.toFixed(1);
+                } else {
+                    valueDisplay.textContent = value;
+                }
+            });
+        }
+
+        updateSliderValue('mu-slider', 'mu-value');
+        updateSliderValue('sigma2-slider', 'sigma2-value');
+        updateSliderValue('n-slider', 'n-value');
+
+        function simulate() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            setTimeout(() => {
+                const mu_teorica = parseFloat(document.getElementById('mu-slider').value);
+                const var_teorica = parseFloat(document.getElementById('sigma2-slider').value);
+                const sigma = Math.sqrt(var_teorica);
+                const n = parseInt(document.getElementById('n-slider').value);
+                
+                // Generar muestra N(μ, σ²)
+                const X = [];
+                for (let i = 0; i < n; i++) {
+                    X.push(randomNormal(mu_teorica, sigma));
+                }
+
+                // Calcular media muestral
+                const media_muestral = X.reduce((sum, x) => sum + x, 0) / n;
+
+                // Calcular varianza muestral (con corrección n-1)
+                const sumSquares = X.reduce((sum, x) => sum + Math.pow(x - media_muestral, 2), 0);
+                const varianza_muestral = sumSquares / (n - 1);
+
+                // Calcular errores
+                const error_media = Math.abs(media_muestral - mu_teorica);
+                const error_var = Math.abs(varianza_muestral - var_teorica);
+
+                // Actualizar comparación
+                document.getElementById('media-muestral').textContent = media_muestral.toFixed(4);
+                document.getElementById('media-teorica').textContent = mu_teorica.toFixed(4);
+                document.getElementById('error-media').textContent = error_media.toFixed(4);
+                
+                document.getElementById('var-muestral').textContent = varianza_muestral.toFixed(4);
+                document.getElementById('var-teorica').textContent = var_teorica.toFixed(4);
+                document.getElementById('error-var').textContent = error_var.toFixed(4);
+
+                // Graficar histograma
+                plotHistogram(X, mu_teorica, sigma);
+
+                loading.classList.remove('active');
+            }, 100);
+        }
+
+        function plotHistogram(X, mu, sigma) {
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            const isLightMode = document.body.classList.contains('light-mode');
+
+            // Calcular el rango de los datos
+            const minX = Math.min(...X);
+            const maxX = Math.max(...X);
+            const range = maxX - minX;
+            
+            // Número de bins
+            const nbins = 40;
+            const binWidth = range / nbins;
+
+            // Histograma de los datos (normalizado como densidad)
+            const trace1 = {
+                x: X,
+                type: 'histogram',
+                name: 'Datos Muestrales',
+                nbinsx: nbins,
+                histnorm: 'probability density',  // Normalizar como densidad
+                marker: {
+                    color: '#667eea',
+                    line: {
+                        color: '#764ba2',
+                        width: 1
+                    }
+                },
+                opacity: 0.7
+            };
+
+            // Curva teórica N(μ, σ²)
+            const xRange = [];
+            const yRange = [];
+            const curveMinX = mu - 4*sigma;
+            const curveMaxX = mu + 4*sigma;
+            const step = (curveMaxX - curveMinX) / 200;
+
+            for (let x = curveMinX; x <= curveMaxX; x += step) {
+                xRange.push(x);
+                // Densidad de probabilidad normal
+                const y = (1 / (sigma * Math.sqrt(2 * Math.PI))) * 
+                         Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+                yRange.push(y);
+            }
+
+            const trace2 = {
+                x: xRange,
+                y: yRange,
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Densidad Teórica N(μ,σ²)',
+                line: {
+                    color: 'red',
+                    width: 3
+                }
+            };
+
+            const layout = {
+                title: {
+                    text: `Histograma de Muestra vs Distribución Teórica N(${mu.toFixed(1)}, ${(sigma*sigma).toFixed(1)})`,
+                    font: {
+                        size: 20,
+                        color: isDarkMode ? '#e0e0e0' : '#333',
+                        family: 'Segoe UI'
+                    }
+                },
+                xaxis: {
+                    title: {
+                        text: 'Valor',
+                        font: {
+                            size: 16,
+                            color: isDarkMode ? '#9f9fff' : '#667eea'
+                        }
+                    },
+                    gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                    showgrid: true,
+                    color: isDarkMode ? '#c0c0c0' : '#333'
+                },
+                yaxis: {
+                    title: {
+                        text: 'Densidad de Probabilidad',
+                        font: {
+                            size: 16,
+                            color: isDarkMode ? '#9f9fff' : '#667eea'
+                        }
+                    },
+                    gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                    showgrid: true,
+                    color: isDarkMode ? '#c0c0c0' : '#333'
+                },
+                plot_bgcolor: isDarkMode ? '#1a1a2e' : (isLightMode ? '#fefefe' : '#fafafa'),
+                paper_bgcolor: isDarkMode ? '#1f1f2e' : 'white',
+                barmode: 'overlay',
+                legend: {
+                    x: 1,
+                    y: 1,
+                    xanchor: 'right',
+                    bgcolor: isDarkMode ? 'rgba(42, 42, 62, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    bordercolor: isDarkMode ? '#9f9fff' : '#667eea',
+                    borderwidth: 2,
+                    font: {
+                        color: isDarkMode ? '#e0e0e0' : '#333'
+                    }
+                },
+                margin: {
+                    l: 70,
+                    r: 40,
+                    t: 80,
+                    b: 60
+                }
+            };
+
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                displaylogo: false,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d']
+            };
+
+            Plotly.newPlot('plot', [trace1, trace2], layout, config);
+        }
+
+        window.addEventListener('load', () => {
+            loadSavedTheme();
+        });
+
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('change', simulate);
+        });
+    </script>
+</body>
+</html>
