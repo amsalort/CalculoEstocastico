@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cálculo Estocástico - Portal de Simulaciones</title>
+    <style>
+        :root[data-theme="dark"] {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #00f2fe;
+            --bg: #0f172a;
+            --bg2: #1e293b;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-hover-bg: rgba(255, 255, 255, 0.08);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --footer: #64748b;
+            --badge-bg: rgba(0, 242, 254, 0.1);
+            --toggle-bg: rgba(255,255,255,0.1);
+            --toggle-border: rgba(255,255,255,0.2);
+            --toggle-icon: '☀️';
+        }
+
+        :root[data-theme="light"] {
+            --primary: #4f46e5;
+            --secondary: #7c3aed;
+            --accent: #0284c7;
+            --bg: #f1f5f9;
+            --bg2: #e2e8f0;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-hover-bg: rgba(255, 255, 255, 1);
+            --border: rgba(0, 0, 0, 0.1);
+            --text: #0f172a;
+            --text-muted: #475569;
+            --footer: #94a3b8;
+            --badge-bg: rgba(2, 132, 199, 0.1);
+            --toggle-bg: rgba(0,0,0,0.08);
+            --toggle-border: rgba(0,0,0,0.15);
+            --toggle-icon: '🌙';
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: radial-gradient(circle at top right, var(--bg2), var(--bg));
+            color: var(--text);
+            margin: 0;
+            padding: 40px 20px;
+            line-height: 1.6;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            z-index: 1000;
+            background: var(--toggle-bg);
+            border: 1px solid var(--toggle-border);
+            border-radius: 50px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(0, 242, 254, 0.2);
+        }
+
+        .theme-toggle .icon {
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--accent), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-title {
+            border-left: 4px solid var(--accent);
+            padding-left: 15px;
+            margin: 40px 0 20px;
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            backdrop-filter: blur(4px);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            background: var(--card-hover-bg);
+            border-color: var(--accent);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin: 0 0 10px 0;
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+
+        .card p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: var(--badge-bg);
+            color: var(--accent);
+            align-self: flex-start;
+        }
+
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--footer);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" aria-label="Cambiar tema">
+    <span class="icon" id="themeIcon">☀️</span>
+    <span id="themeLabel">Modo claro</span>
+</button>
+
+<div class="container">
+    <header>
+        <h1>Cálculo Estocástico</h1>
+        <p><b>Laboratorio Interactivo de Modelización Financiera y Procesos de Difusión</b></p>
+        <p><span style="color: #fbbf24; font-weight: bold;">Prof. Ariel Salort</span></p>
+    </header>
+
+    <h2 class="section-title">I. Fundamentos y Repaso</h2>
+    <div class="grid">
+        <a href="Repaso - Distribuciones.html" class="card">
+            <div>
+                <h3>Atlas de Distribuciones</h3>
+                <p>Visualización interactiva de las principales funciones de densidad y masa.</p>
+            </div>
+            <span class="badge">Probabilidad</span>
+        </a>
+        <a href="Repaso - Ejercicio 1 - Distribución uniforme.html" class="card">
+            <div>
+                <h3>Ley de Grandes Números</h3>
+                <p>Simulación de convergencia utilizando distribución uniforme.</p>
+            </div>
+            <span class="badge">Ejercicio 1</span>
+        </a>
+        <a href="Repaso - Ejercicio 2 - Distribución normal.html" class="card">
+            <div>
+                <h3>Estimación de Parámetros</h3>
+                <p>Simulación y ajuste de curvas para distribución normal.</p>
+            </div>
+            <span class="badge">Ejercicio 2</span>
+        </a>
+        <a href="Repaso - Teorema central de límite.html" class="card">
+            <div>
+                <h3>Teorema Central del Límite</h3>
+                <p>Visualización de la convergencia a la normalidad.</p>
+            </div>
+            <span class="badge">Teorema</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">II. Laboratorio de Procesos Estocásticos</h2>
+    <div class="grid">
+        <a href="Ejemplo 1 - Caminata Aleatoria discreta.html" class="card">
+            <h3>Caminata Discreta <small>(Ejemplo 1)</small></h3>
+            <p>Pasos equidistantes en el tiempo.</p>
+            <span class="badge">Ejemplo 1</span>
+        </a>
+        <a href="Ejemplo 2 - Caminata Aleatoria discreta normal.html" class="card">
+            <h3>Caminata Normal &nbsp;&nbsp;&nbsp;&nbsp; <small>(Ejemplo 2)</small></h3>
+            <p>Incrementos con distribución normal.</p>
+            <span class="badge">Ejemplo 2</span>
+        </a>
+        <a href="Ejemplo 3 - Procesos estocásticos - Proceso de Poisson.html" class="card">
+            <h3>Proceso de Poisson <small>(Ejemplo 3)</small></h3>
+            <p>Modelización de eventos discretos.</p>
+            <span class="badge">Ejemplo 3</span>
+        </a>
+        <a href="Ejemplo 4 - Procesos estocásticos - Proceso Browniano.html" class="card">
+            <h3>Movimiento Browniano <small>(Ejemplo 4)</small></h3>
+            <p>Simulación de procesos de Wiener estándar.</p>
+            <span class="badge">Ejemplo 4</span>
+        </a>
+        <a href="Ejemplo 5 - Procesos estocásticos - Proceso Browniano 2D.html" class="card">
+            <h3>Browniano bidimensional <small>(Ejemplo 5)</small></h3>
+            <p>Trayectorias aleatorias en el plano.</p>
+            <span class="badge">Ejemplo 5</span>
+        </a>
+        <a href="Ejemplo 6 - Procesos estocásticos - Puente Browniano.html" class="card">
+            <h3>Puente Browniano <small>(Ejemplo 6)</small></h3>
+            <p>Procesos condicionados a un valor final.</p>
+            <span class="badge">Ejemplo 6</span>
+        </a>
+        <a href="Ejemplo 7 - Procesos estocásticos - Movimiento Browniano con tendencia.html" class="card">
+            <h3>Browniano con Drift <small>(Ejemplo 7)</small></h3>
+            <p>Inclusión de tendencia en el proceso.</p>
+            <span class="badge">Ejemplo 7</span>
+        </a>
+        <a href="Ejemplo 8 - Procesos estocásticos - Movimiento Browniano geométrico.html" class="card">
+            <h3>Browniano Geométrico <small>(Ejemplo 8)</small></h3>
+            <p>Fundamento del modelo Black-Scholes.</p>
+            <span class="badge">Ejemplo 8</span>
+        </a>
+        <a href="Ejemplo 9 - Procesos estocásticos - Ruido de colores.html" class="card">
+            <h3>Ruido de varios colores  <small>(Ejemplo 9)</small></h3>
+            <p>Análisis de ruido rosa, blanco y marrón.</p>
+            <span class="badge">Ejemplo 9</span>
+        </a>
+    </div>
+
+    <h2 class="section-title">III. Martingalas y Ecuaciones Avanzadas</h2>
+    <div class="grid">
+        <a href="Ejemplo 10 - Martingala - Moneda y ruleta.html" class="card">
+            <h3>Martingalas Básicas <small>(Ejemplo 10)</small></h3>
+            <p>Simulación de juegos de azar y esperanza.</p>
+            <span class="badge">Ejemplo 10</span>
+        </a>
+        <a href="Ejemplo 11 - Martingala - Ruleta duplica.html" class="card">
+            <h3>Estrategia Martingala <small>(Ejemplo 11)</small></h3>
+            <p>Análisis de la apuesta de duplicación.</p>
+            <span class="badge">Ejemplo 11</span>
+        </a>
+        <a href="Ejemplo 13 - Ecuaciones estocásticas - Proceso Ornstein-Uhlenbeck.html" class="card">
+            <h3>Ornstein-Uhlenbeck <small>(Ejemplo 13)</small></h3>
+            <p>Procesos de reversión a la media.</p>
+            <span class="badge">Ejemplo 13</span>
+        </a>
+        <a href="Ejemplo 14 - Ecuaciones estocásticas - Modelo de Tasas de Interés de Vasicek.html" class="card">
+            <h3>Modelo de Vasicek <small>(Ejemplo 14)</small></h3>
+            <p>Modelización de tipos de interés financieros.</p>
+            <span class="badge">Ejemplo 14</span>
+        </a>
+    </div>
+
+    <footer>
+        &copy; 2026 Universidad San Pablo CEU<br>
+        Desarrollado para el Proyecto de Innovación Educativa
+    </footer>
+</div>
+
+<script>
+    function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('themeIcon').textContent = isDark ? '🌙' : '☀️';
+        document.getElementById('themeLabel').textContent = isDark ? 'Modo oscuro' : 'Modo claro';
+    }
+</script>
+
+</body>
+</html>

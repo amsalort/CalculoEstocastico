@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Puente Browniano - Ecuaciones Estocásticas</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            transition: background 0.5s ease;
+        }
+
+        body.light-mode {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .container {
+            background: #2a2a3e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .controls {
+            background: #1f1f2e;
+        }
+
+        body.dark-mode .control-group label {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .value-display span {
+            color: #c4a7ff;
+        }
+
+        body.dark-mode .info-box {
+            background: linear-gradient(135deg, #2a2a4e 0%, #3a3a5e 100%);
+            border-left-color: #9f9fff;
+        }
+
+        body.dark-mode .info-box h3 {
+            color: #9f9fff;
+        }
+
+        body.dark-mode .info-box p {
+            color: #c0c0c0;
+        }
+
+        body.dark-mode .formula {
+            background: #1a1a2e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .chart-container {
+            background: #1f1f2e;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 30px;
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .value-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .value-display span {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            -webkit-appearance: none;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]:hover {
+            background: #b8b8b8;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-simulate {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-simulate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-simulate:active {
+            transform: translateY(0);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e0e7ff 0%, #e9d5ff 100%);
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .info-box p {
+            font-size: 0.95em;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .formula {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 1.05em;
+        }
+
+        .divider {
+            margin: 25px 0;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        body.dark-mode .divider {
+            border-top-color: #3a3a4e;
+        }
+
+        body.light-mode .divider {
+            border-top-color: #d0d0d0;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        body.dark-mode .theme-selector {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        body.light-mode .theme-selector {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .theme-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn.active {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .theme-btn.light {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            color: #333;
+        }
+
+        .theme-btn.light.active {
+            background: linear-gradient(135deg, #e0e7ff 0%, #f0e7ff 100%);
+            color: #667eea;
+            border-color: #667eea;
+        }
+
+        .theme-btn.dark {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+        }
+
+        .theme-btn.dark.active {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #9f9fff;
+            border-color: #9f9fff;
+        }
+
+        body.dark-mode .theme-btn {
+            background: #3a3a4e;
+            color: #c0c0c0;
+        }
+
+        body.light-mode .theme-btn {
+            background: #f8f8f8;
+            color: #555;
+        }
+
+        .bridge-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 0 2px;
+        }
+
+        .info-note {
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 5px;
+            padding: 8px;
+            margin-top: 8px;
+            font-size: 0.85em;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌉 Simulador de Puente Browniano</h1>
+            <p>Ecuaciones Estocásticas 2026 - Prof. Ariel Salort</p>
+        </div>
+
+        <div class="content">
+            <div class="controls">
+                <h2 style="margin-bottom: 20px; color: #667eea;">⚙️ Parámetros</h2>
+                
+                <div class="info-box">
+                    <h3>📊 Modelo</h3>
+                    <p>Puente Browniano (Brownian Bridge):</p>
+                    <div class="formula">
+                        X(t) = B(t) - (t/T)·B(T)
+                    </div>
+                    <p style="margin-top: 8px;">donde <span class="bridge-badge">X(0) = 0</span> y <span class="bridge-badge">X(T) = 0</span></p>
+                    <div class="info-note">
+                        Movimiento browniano condicionado a volver al origen
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">⏳ Simulando...</div>
+                <button class="btn-simulate" onclick="simulate()">🚀 Simular</button>
+
+                <div class="divider"></div>
+                
+                <div class="control-group">
+                    <label>Tiempo Final (T)</label>
+                    <div class="value-display">
+                        <span id="T-value">1.0</span>
+                        <span style="font-size: 0.9em; color: #888;">unidades</span>
+                    </div>
+                    <input type="range" id="T-slider" min="0.1" max="10" value="1.0" step="0.1">
+                </div>
+
+                <div class="control-group">
+                    <label>Número de Pasos (N)</label>
+                    <div class="value-display">
+                        <span id="N-value">1000</span>
+                        <span style="font-size: 0.9em; color: #888;">pasos</span>
+                    </div>
+                    <input type="range" id="N-slider" min="100" max="5000" value="1000" step="100">
+                </div>
+
+                <div class="control-group">
+                    <label>Número de Trayectorias</label>
+                    <div class="value-display">
+                        <span id="R-value">2</span>
+                        <span style="font-size: 0.9em; color: #888;">trayectorias</span>
+                    </div>
+                    <input type="range" id="R-slider" min="1" max="20" value="2" step="1">
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="theme-selector">
+                    <button class="theme-btn light" onclick="setTheme('light')" id="theme-light">
+                        ☀️ Claro
+                    </button>
+                    <button class="theme-btn active" onclick="setTheme('normal')" id="theme-normal">
+                        🌗 Normal
+                    </button>
+                    <button class="theme-btn dark" onclick="setTheme('dark')" id="theme-dark">
+                        🌙 Oscuro
+                    </button>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div id="plot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para cambiar el tema
+        function setTheme(theme) {
+            const body = document.body;
+            
+            // Remover todas las clases de tema
+            body.classList.remove('light-mode', 'dark-mode');
+            
+            // Remover clase active de todos los botones
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Aplicar el tema seleccionado
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                document.getElementById('theme-light').classList.add('active');
+            } else if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                document.getElementById('theme-dark').classList.add('active');
+            } else {
+                // Modo normal (por defecto)
+                document.getElementById('theme-normal').classList.add('active');
+            }
+            
+            // Guardar preferencia en localStorage
+            localStorage.setItem('theme', theme);
+            
+            // Re-renderizar el gráfico con los colores apropiados
+            simulate();
+        }
+
+        // Cargar tema guardado al iniciar
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'normal';
+            setTheme(savedTheme);
+        }
+
+        // Generador de números aleatorios con distribución normal (Box-Muller)
+        function randomNormal(mean = 0, std = 1) {
+            let u1 = Math.random();
+            let u2 = Math.random();
+            let z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+            return z0 * std + mean;
+        }
+
+        // Actualizar valores de los sliders
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueDisplay = document.getElementById(valueId);
+            
+            slider.addEventListener('input', function() {
+                let value = parseFloat(this.value);
+                // Formatear según el tipo de valor
+                if (sliderId === 'T-slider') {
+                    valueDisplay.textContent = value.toFixed(1);
+                } else {
+                    valueDisplay.textContent = value;
+                }
+            });
+        }
+
+        // Inicializar todos los sliders
+        updateSliderValue('T-slider', 'T-value');
+        updateSliderValue('N-slider', 'N-value');
+        updateSliderValue('R-slider', 'R-value');
+
+        // Función principal de simulación
+        function simulate() {
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+
+            // Pequeño delay para que se vea el indicador de carga
+            setTimeout(() => {
+                // Obtener parámetros
+                const T = parseFloat(document.getElementById('T-slider').value);
+                const N = parseInt(document.getElementById('N-slider').value);
+                const n_trayectorias = parseInt(document.getElementById('R-slider').value);
+                
+                const dt = T / N;
+
+                // Vector de tiempos
+                const t = [];
+                for (let i = 0; i <= N; i++) {
+                    t.push((i / N) * T);
+                }
+
+                // Colores para las diferentes trayectorias
+                const colors = [
+                    '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                    '#43e97b', '#fa709a', '#fee140', '#30cfd0',
+                    '#a8edea', '#fed6e3', '#ff6b6b', '#4ecdc4',
+                    '#45b7d1', '#f9ca24', '#6c5ce7', '#a29bfe',
+                    '#fd79a8', '#fdcb6e', '#e17055', '#00b894'
+                ];
+
+                // Generar trazas para cada trayectoria
+                const traces = [];
+
+                for (let i = 1; i <= n_trayectorias; i++) {
+                    // Generar incrementos brownianos
+                    const dB = [];
+                    for (let j = 0; j < N; j++) {
+                        dB.push(randomNormal(0, Math.sqrt(dt)));
+                    }
+
+                    // Construir el movimiento browniano B(t)
+                    const B = new Array(N + 1);
+                    B[0] = 0; // B(0) = 0
+
+                    // Suma acumulativa
+                    for (let j = 1; j <= N; j++) {
+                        B[j] = B[j - 1] + dB[j - 1];
+                    }
+
+                    // Construir el puente browniano: X(t) = B(t) - (t/T) * B(T)
+                    const X = new Array(N + 1);
+                    const B_T = B[N]; // Valor final del browniano
+
+                    for (let j = 0; j <= N; j++) {
+                        X[j] = B[j] - (t[j] / T) * B_T;
+                    }
+
+                    // Decidir el color y el ancho según el número de trayectorias
+                    let lineColor, lineWidth, lineOpacity;
+                    if (n_trayectorias <= 5) {
+                        // Pocas trayectorias: colores distintos, líneas gruesas
+                        lineColor = colors[(i - 1) % colors.length];
+                        lineWidth = 2.5;
+                        lineOpacity = 1;
+                    } else {
+                        // Muchas trayectorias: negro semi-transparente, líneas delgadas
+                        lineColor = 'rgba(0, 0, 0, 0.3)';
+                        lineWidth = 1;
+                        lineOpacity = 0.5;
+                    }
+
+                    traces.push({
+                        x: t,
+                        y: X,
+                        mode: 'lines',
+                        name: n_trayectorias <= 5 ? `Trayectoria ${i}` : '',
+                        line: {
+                            color: lineColor,
+                            width: lineWidth
+                        },
+                        opacity: lineOpacity,
+                        showlegend: n_trayectorias <= 5,
+                        hovertemplate: 't: %{x:.3f}<br>X(t): %{y:.3f}<extra></extra>'
+                    });
+                }
+
+                // Añadir línea horizontal en y=0 para referencia
+                traces.push({
+                    x: [0, T],
+                    y: [0, 0],
+                    mode: 'lines',
+                    name: 'Línea de referencia',
+                    line: {
+                        color: 'red',
+                        width: 2,
+                        dash: 'dash'
+                    },
+                    showlegend: true,
+                    hoverinfo: 'skip'
+                });
+
+                // Configuración del gráfico
+                const isDarkMode = document.body.classList.contains('dark-mode');
+                const isLightMode = document.body.classList.contains('light-mode');
+                
+                const layout = {
+                    title: {
+                        text: 'Puente Browniano',
+                        font: {
+                            size: 24,
+                            color: isDarkMode ? '#e0e0e0' : '#333',
+                            family: 'Segoe UI'
+                        }
+                    },
+                    xaxis: {
+                        title: {
+                            text: 't',
+                            font: {
+                                size: 16,
+                                color: isDarkMode ? '#9f9fff' : '#667eea'
+                            }
+                        },
+                        gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                        showgrid: true,
+                        color: isDarkMode ? '#c0c0c0' : '#333',
+                        range: [0, T]
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'X(t)',
+                            font: {
+                                size: 16,
+                                color: isDarkMode ? '#9f9fff' : '#667eea'
+                            }
+                        },
+                        gridcolor: isDarkMode ? '#3a3a4e' : '#e0e0e0',
+                        showgrid: true,
+                        color: isDarkMode ? '#c0c0c0' : '#333',
+                        zeroline: true,
+                        zerolinecolor: isDarkMode ? '#666' : '#999',
+                        zerolinewidth: 2
+                    },
+                    plot_bgcolor: isDarkMode ? '#1a1a2e' : (isLightMode ? '#fefefe' : '#fafafa'),
+                    paper_bgcolor: isDarkMode ? '#1f1f2e' : 'white',
+                    hovermode: 'closest',
+                    legend: {
+                        x: 1,
+                        y: 1,
+                        xanchor: 'right',
+                        bgcolor: isDarkMode ? 'rgba(42, 42, 62, 0.9)' : 'rgba(255, 255, 255, 0.8)',
+                        bordercolor: isDarkMode ? '#9f9fff' : '#667eea',
+                        borderwidth: 1,
+                        font: {
+                            color: isDarkMode ? '#e0e0e0' : '#333'
+                        }
+                    },
+                    margin: {
+                        l: 60,
+                        r: 40,
+                        t: 80,
+                        b: 60
+                    }
+                };
+
+                const config = {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                };
+
+                // Renderizar gráfico
+                Plotly.newPlot('plot', traces, layout, config);
+
+                loading.classList.remove('active');
+            }, 100);
+        }
+
+        // Cargar tema y simular al cargar la página
+        window.addEventListener('load', () => {
+            loadSavedTheme();
+        });
+
+        // Auto-simular cuando se suelta un slider
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('change', simulate);
+        });
+    </script>
+</body>
+</html>
