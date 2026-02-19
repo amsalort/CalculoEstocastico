@@ -600,6 +600,50 @@
             });
         }
 
+        // ============================
+// THEME TOGGLE
+// ============================
+let isLight = false;
+
+function toggleTheme() {
+    isLight = !isLight;
+    document.body.classList.toggle('light-mode', isLight);
+    document.body.classList.toggle('dark-mode', !isLight);
+    document.documentElement.classList.toggle('light', isLight);
+    const btn = document.getElementById('theme-btn');
+    document.getElementById('theme-label').textContent = isLight ? 'Modo Oscuro' : 'Modo Claro';
+    btn.querySelector('.icon').textContent = isLight ? '☀️' : '🌙';
+    // Re-render charts with updated colors
+    runSimulation();
+}
+
+function getLayoutBase() {
+    if (isLight) {
+        return {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'rgba(232,230,245,0.6)',
+            font: { family: 'DM Mono, monospace', color: '#66607a', size: 11 },
+            margin: { l: 50, r: 20, t: 10, b: 50 },
+            xaxis: { gridcolor: 'rgba(0,0,0,0.07)', zerolinecolor: 'rgba(0,0,0,0.15)', tickfont: { size: 10 } },
+            yaxis: { gridcolor: 'rgba(0,0,0,0.07)', zerolinecolor: 'rgba(0,0,0,0.15)', tickfont: { size: 10 } },
+            legend: { font: { size: 10, color: '#66607a' }, bgcolor: 'transparent' },
+            showlegend: true
+        };
+    }
+    return darkLayout;
+}
+
+
+buildDistGrid();
+buildParams();
+updateFormula();
+// Restore saved theme
+// Default to dark mode like other files
+document.body.classList.add('dark-mode');
+
+
+        
+
         function plotConvergence(data, alpha) {
             const isDarkMode = document.body.classList.contains('dark-mode');
             const isLightMode = document.body.classList.contains('light-mode');
